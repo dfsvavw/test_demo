@@ -83,6 +83,20 @@ try {
     Assert-PathExists (Join-Path $PortableData 'user-data') 'Restored user-data'
     Assert-PathExists (Join-Path $PortableData 'extensions') 'Restored extensions'
 
+    # Verify that the current PATH resolves 'code' to this portable installation.
+    # Use Get-Command -All to detect stale Cursor or other conflicting shims.
+    $resolvedCode = Get-Command code -ErrorAction SilentlyContinue
+    if ($null -eq $resolvedCode) {
+        throw "PATH validation failed: 'code' command not found. Add E:\\VSCode\\bin to PATH and reopen PowerShell."
+    }
+    $expectedCli = [System.IO.Path]::GetFullPath($CodeCli)
+    $actualCli = if ($resolvedCode.Source) { $resolvedCode.Source } else { $resolvedCode.Definition }
+    $actualCli = [System.IO.Path]::GetFullPath($actualCli)
+    if (-not [string]::Equals($actualCli, $expectedCli, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "PATH validation failed: 'code' resolves to $actualCli, expected $expectedCli. Fix PATH before retrying."
+    }
+    Write-Host "PATH verified: $actualCli"
+
     # 4. Validate the new CLI and extension discovery.
     Write-Host '[4/4] Verifying the new version and extensions...'
     $versionOutput = @(& $CodeCli --version)
