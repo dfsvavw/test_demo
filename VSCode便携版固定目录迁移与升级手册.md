@@ -128,17 +128,21 @@ code --list-extensions
 
 ## 五、后续每次升级的标准流程
 
-示例新版本 ZIP 已解压到：
+### 0. 设置目标版本（每次升级只修改这一处）
 
-```text
-E:\tools\VSCode-win32-x64-1.137.0
+将下载的新版 ZIP 解压至 `E:\tools\VSCode-win32-x64-<版本号>`，然后在**当前 PowerShell 会话中**执行：
+
+```powershell
+$TargetVersion = "1.137.0"
 ```
+
+下面所有升级命令直接引用 `$TargetVersion`。将来升级到新版本，只需更改这一行，无须修改其余命令；请在同一个 PowerShell 会话中依次运行。
 
 ### 1. 检查新解压目录
 
 ```powershell
-Test-Path "E:\tools\VSCode-win32-x64-1.137.0\Code.exe"
-Test-Path "E:\tools\VSCode-win32-x64-1.137.0\data"
+Test-Path "E:\tools\VSCode-win32-x64-$TargetVersion\Code.exe"
+Test-Path "E:\tools\VSCode-win32-x64-$TargetVersion\data"
 ```
 
 第一项应为 `True`，第二项通常应为 `False`；若新目录已有 `data`，先查清来源，避免覆盖现有 Portable 数据。
@@ -164,7 +168,7 @@ Rename-Item "E:\VSCode" "E:\VSCode_backup"
 ### 4. 将新版放到固定目录
 
 ```powershell
-Copy-Item "E:\tools\VSCode-win32-x64-1.137.0" -Destination "E:\VSCode" -Recurse
+Copy-Item "E:\tools\VSCode-win32-x64-$TargetVersion" -Destination "E:\VSCode" -Recurse
 ```
 
 确保复制成功且 `E:\VSCode\Code.exe` 存在后，再恢复数据。
@@ -202,7 +206,7 @@ x64
 
 ```powershell
 Remove-Item "E:\VSCode_backup" -Recurse -Force
-Remove-Item "E:\tools\VSCode-win32-x64-1.137.0" -Recurse -Force
+Remove-Item "E:\tools\VSCode-win32-x64-$TargetVersion" -Recurse -Force
 ```
 
 如需回滚，在删备份前关闭 VS Code，把当前 `E:\VSCode\data` 安全保存，再恢复备份程序；注意新旧版本间用户数据可能存在兼容差异。
@@ -229,14 +233,17 @@ Remove-Item "E:\VSCode-win32-x64-1.109.5" -Recurse -Force
 ## 七、以后升级简表
 
 ```powershell
-# 先确认新 ZIP 解压路径、保存编辑内容、关闭 VS Code
+# 每次升级只需修改这一行，并在同一个 PowerShell 会话内执行后续命令
+$TargetVersion = "1.137.0"
+
+# 确认已解压新版 ZIP、保存编辑内容、关闭 VS Code
 Get-Process Code -ErrorAction SilentlyContinue | Stop-Process -Force
 
 # 确保 E:\VSCode_backup 不存在
 Rename-Item "E:\VSCode" "E:\VSCode_backup"
 
 # 换成实际新版解压目录
-Copy-Item "E:\tools\VSCode-win32-x64-1.137.0" -Destination "E:\VSCode" -Recurse
+Copy-Item "E:\tools\VSCode-win32-x64-$TargetVersion" -Destination "E:\VSCode" -Recurse
 
 # 必须确认复制成功后再执行
 Move-Item "E:\VSCode_backup\data" "E:\VSCode\data"
